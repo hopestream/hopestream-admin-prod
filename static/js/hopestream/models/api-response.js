@@ -26,7 +26,7 @@ HopeStream.APIResponse = function() {
 HopeStream.APIResponse.fromJSON = function(json) {
     if (!json) { return undefined; }
 
-    let result = new HopeStream.APIResponse();
+    var result = new HopeStream.APIResponse();
 
     var topics = json.topics || [];
     for (var i = 0; i < topics.length; i++) {

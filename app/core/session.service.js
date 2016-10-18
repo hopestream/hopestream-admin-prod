@@ -26,7 +26,7 @@
             var accessToken = getAccessToken();
             if (accessToken && !headers['Authorization']) { headers['Authorization'] = 'Bearer ' + accessToken; }
 
-            let url = API_URL;
+            var url = API_URL;
             if (path.lastIndexOf('oauth/token', 0) != 0) { url = url + 'admin/api/1/'; }
             url = url + path;
 
