@@ -27,7 +27,7 @@
 
         $rootScope.$on('imageUploadCompleted', updateImageURL);
         function updateImageURL() {
-            vm.imageUrl = vm.organization && vm.organization.imageUrl + '?' + new Date().getTime();
+            vm.imageUrl = vm.organization && vm.organization.imageUrl.replace("static.hopestream.com", "hopestream.s3.amazonaws.com") + '?' + new Date().getTime();
 
             vm.shouldShowImage = false;
             $timeout(function() { vm.shouldShowImage = true; }, 0);

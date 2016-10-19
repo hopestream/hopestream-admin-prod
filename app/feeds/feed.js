@@ -46,7 +46,7 @@
 
         $rootScope.$on('imageUploadCompleted', updateImageURL);
         function updateImageURL() {
-            vm.imageUrl = HopeStream.STATIC_URL + 'feed/' + vm.hash + '/thumbnail.jpg?' + new Date().getTime();
+            vm.imageUrl = HopeStream.STATIC_URL.replace("static.hopestream.com", "hopestream.s3.amazonaws.com") + 'feed/' + vm.hash + '/thumbnail.jpg?' + new Date().getTime();
 
             vm.shouldShowImage = false;
             $timeout(function() { vm.shouldShowImage = true; }, 0);
