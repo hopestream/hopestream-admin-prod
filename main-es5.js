@@ -14831,7 +14831,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         this.state = state;
         this.auth = auth;
         this.notifications = notifications;
-        this.visible = 1;
+        this.visible = 0;
         this.loading = false;
         this.form = new _angular_forms__WEBPACK_IMPORTED_MODULE_2__["FormGroup"]({});
         this.form.addControl('name', new _angular_forms__WEBPACK_IMPORTED_MODULE_2__["FormControl"]('', [_angular_forms__WEBPACK_IMPORTED_MODULE_2__["Validators"].required]));
