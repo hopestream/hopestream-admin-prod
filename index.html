@@ -1,26 +1,64 @@
-<!DOCTYPE html>
-<html lang="en" data-ng-app="app" data-ng-strict-di>
-    <head>
-        <title>HopeStream Admin</title>
+<!doctype html>
+<html lang="en">
 
-        <meta charset="utf-8">
-        <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="description" content="HopeStream">
-        <meta name="author" content="HopeStream">
-        <link rel="icon" href="static/img/favicon.ico">
+<head>
+    <meta charset="utf-8">
+    <title>HopeStream</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <base href="/" />
+    <link rel="shortcut icon" href="assets/images/hopestream-logo.png" type="image/png">
 
-        <!-- HTML5 shim and Respond.js for IE8 support of HTML5 elements and media queries -->
-        <!-- WARNING: Respond.js doesn't work if you view the page via file:// -->
-        <!--[if lt IE 9]>
-          <script src="https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js"></script>
-          <script src="https://oss.maxcdn.com/respond/1.4.2/respond.min.js"></script>
-        <![endif]-->
+    <!-- Global site tag (gtag.js) - Google Analytics -->
+    <!-- <script async src="https://www.googletagmanager.com/gtag/js?id=G-L4P1K6ZBYF"></script>
+    <script>
+        window.dataLayer = window.dataLayer || [];
+        function gtag() { dataLayer.push(arguments); }
+        gtag('js', new Date());
+        gtag('config', 'G-L4P1K6ZBYF');
+    </script> -->
 
-        <base href="/">
-    <link href="/app.bundle.css?27115d084c80018122cf" rel="stylesheet"></head>
-    <body data-ng-app="app" data-ng-strict-di>
-        <div ui-view="navbar"></div>
-        <div ui-view="content"></div>
-    <script type="text/javascript" src="/vendor.bundle.js?27115d084c80018122cf"></script><script type="text/javascript" src="/app.bundle.js?27115d084c80018122cf"></script></body>
+    <!-- Needed to inject a node buffer equivalent into the browser. -->
+    <script type="text/javascript">window.global = window;</script>
+</head>
+
+<body>
+    <div id="not-supported" style="display: none; margin: 3rem auto 0rem auto; text-align: center;">
+        <table style="margin: 0 auto;">
+            <tr>
+                <td><img width="48" src="assets/images/hopestream-logo.png" /></td>
+                <td style="font-family: vyasa, sans-serif; font-size: 36px; font-weight: 700; color: #323c47;">HopeStream</td>
+            </tr>
+        </table>
+        <div style="text-align: left; background: #fafafa; border-radius: 3px; padding: 32px 40px; margin: 3rem auto 1rem auto; width: 350px;">
+            <div style="text-align: center; font-size: 18px;"><strong>Please Change Browsers</strong></div><br />
+            Please note that HopeStream is supported only in the following browsers:<br />
+            <a href="https://www.google.com/chrome/">Chrome</a>, <a href="https://www.mozilla.org/en-US/firefox/new/">Firefox</a>, <a href="https://support.apple.com/downloads/safari">Safari</a>, <a href="https://www.microsoft.com/en-us/windows/microsoft-edge">Microsoft Edge</a>.
+        </div>
+    </div>
+
+    <script>
+        // https://stackoverflow.com/questions/9847580/how-to-detect-safari-chrome-ie-firefox-and-opera-browser/9851769
+        function _IsInternetExplorer() {
+            return /*@cc_on!@*/false || !!document.documentMode;
+        }
+
+        // https://gist.github.com/davidhund/b995353fdf9ce387b8a2 
+        function _IsFlexboxSupported() {
+            var e = document.createElement('b');
+            try {
+                e.style.display = '-webkit-flex';
+                e.style.display = 'flex';
+                return !!(e.style.display === 'flex' || e.style.display === '-webkit-flex');
+            } catch (error) { }
+            return false;
+        };
+
+        if (_IsInternetExplorer() || !_IsFlexboxSupported()) {
+            document.getElementById("not-supported").style.display = 'block';
+        } else {
+            document.body.innerHTML = '<app-root></app-root>';
+        }
+    </script>
+<script src="runtime-es2015.js" type="module"></script><script src="runtime-es5.js" nomodule defer></script><script src="polyfills-es5.js" nomodule defer></script><script src="polyfills-es2015.js" type="module"></script><script src="styles-es2015.js" type="module"></script><script src="styles-es5.js" nomodule defer></script><script src="vendor-es2015.js" type="module"></script><script src="vendor-es5.js" nomodule defer></script><script src="main-es2015.js" type="module"></script><script src="main-es5.js" nomodule defer></script></body>
+
 </html>

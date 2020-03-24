@@ -1,0 +1,7 @@
+{
+    "version": "@VERSION@",
+    "commit": "@COMMIT@",
+    "branch": "@BRANCH@",
+    "build-date": "@BUILD_DATE@",
+    "build-number": "@BUILD_NUMBER@"
+}
