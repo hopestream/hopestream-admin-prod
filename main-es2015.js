@@ -1847,6 +1847,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm2015/operators/index.js");
 /* harmony import */ var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @services/app/app.api */ "./src/app/_services/app/app.api.ts");
 /* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/common/http */ "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
+/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+
 
 
 
@@ -1861,7 +1863,7 @@ const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v6.0/dialog/oauth';
 const FACEBOOK_API_URL = 'https://www.googleapis.com';
 const OAUTH_CLIENT_ID = '1613742305579846';
 const OAUTH_CLIENT_SECRET = 'a9417a7250676b953d8b8b40467a90cd';
-const REDIRECT_URI_LOCAL = 'http://localhost:8080/#/'; // 'https://www.facebook.com/connect/login_success.html';
+const REDIRECT_URI_LOCAL = `${_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl}/oauth/facebook`;
 const SCOPES = [
     'publish_video'
 ];
@@ -2127,6 +2129,8 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm2015/operators/index.js");
 /* harmony import */ var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @services/app/app.api */ "./src/app/_services/app/app.api.ts");
 /* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/common/http */ "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
+/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+
 
 
 
@@ -2141,7 +2145,7 @@ const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_API_URL = 'https://www.googleapis.com';
 const OAUTH_CLIENT_ID = '411673316996-iak5hlp5od4pvefhlc9ephasmp9dgo6f.apps.googleusercontent.com';
 const OAUTH_CLIENT_SECRET = '2BQeOxl-YIAo-HjLLz-hxorg';
-const REDIRECT_URI_LOCAL = 'http://localhost:8080';
+const REDIRECT_URI_LOCAL = `${_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl}/oauth/google`;
 const SCOPES = [
     'https://www.googleapis.com/auth/youtube.upload',
     'https://www.googleapis.com/auth/youtube'
@@ -7452,7 +7456,8 @@ const routes = [
             { path: 'feeds', component: _feed_feed_list_feed_list_component__WEBPACK_IMPORTED_MODULE_13__["FeedListComponent"] },
             { path: 'feeds/:id', component: _feed_feed_detail_feed_detail_component__WEBPACK_IMPORTED_MODULE_14__["FeedDetailComponent"] },
             { path: 'settings', component: _settings_settings_component__WEBPACK_IMPORTED_MODULE_17__["SettingsComponent"] },
-            { path: 'oauth', component: _common_blank_blank_component__WEBPACK_IMPORTED_MODULE_18__["BlankComponent"] },
+            { path: 'oauth/facebook', component: _common_blank_blank_component__WEBPACK_IMPORTED_MODULE_18__["BlankComponent"] },
+            { path: 'oauth/google', component: _common_blank_blank_component__WEBPACK_IMPORTED_MODULE_18__["BlankComponent"] },
         ]
     },
     { path: 'sign-in', canActivate: [_services_auth_guard__WEBPACK_IMPORTED_MODULE_4__["AuthGuard"]], component: _sign_in_sign_in_sign_in_component__WEBPACK_IMPORTED_MODULE_5__["SignInComponent"] },
@@ -9761,6 +9766,7 @@ const environment = {
     production: false,
     apiUrl: 'https://api.hopestream.com',
     // apiUrl: 'http://localhost:3000',
+    clientUrl: 'http://localhost:8080',
     staticUrl: 'https://static.hopestream.com/',
     playerUrl: 'https://static.hopestream.com/player.html',
     stripeApiKey: 'pk_live_4c6L6Fy6sbVWH2UgF02yk0Pw00pTGSIXlg'

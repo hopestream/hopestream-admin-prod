@@ -3548,14 +3548,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
     /*! @angular/common/http */
     "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
+    /* harmony import */
+
+
+    var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    /*! @environments/environment */
+    "./src/environments/environment.ts");
 
     var NETWORK = 'facebook';
     var FACEBOOK_AUTH_URL = 'https://www.facebook.com/v6.0/dialog/oauth';
     var FACEBOOK_API_URL = 'https://www.googleapis.com';
     var OAUTH_CLIENT_ID = '1613742305579846';
     var OAUTH_CLIENT_SECRET = 'a9417a7250676b953d8b8b40467a90cd';
-    var REDIRECT_URI_LOCAL = 'http://localhost:8080/#/'; // 'https://www.facebook.com/connect/login_success.html';
-
+    var REDIRECT_URI_LOCAL = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl, "/oauth/facebook");
     var SCOPES = ['publish_video'];
 
     var PendingSubject = /*#__PURE__*/function (_rxjs__WEBPACK_IMPORT) {
@@ -3993,13 +3998,19 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
     /*! @angular/common/http */
     "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
+    /* harmony import */
+
+
+    var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    /*! @environments/environment */
+    "./src/environments/environment.ts");
 
     var NETWORK = 'youtube';
     var GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     var GOOGLE_API_URL = 'https://www.googleapis.com';
     var OAUTH_CLIENT_ID = '411673316996-iak5hlp5od4pvefhlc9ephasmp9dgo6f.apps.googleusercontent.com';
     var OAUTH_CLIENT_SECRET = '2BQeOxl-YIAo-HjLLz-hxorg';
-    var REDIRECT_URI_LOCAL = 'http://localhost:8080';
+    var REDIRECT_URI_LOCAL = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl, "/oauth/google");
     var SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'];
 
     var PendingSubject = /*#__PURE__*/function (_rxjs__WEBPACK_IMPORT2) {
@@ -14260,7 +14271,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         path: 'settings',
         component: _settings_settings_component__WEBPACK_IMPORTED_MODULE_17__["SettingsComponent"]
       }, {
-        path: 'oauth',
+        path: 'oauth/facebook',
+        component: _common_blank_blank_component__WEBPACK_IMPORTED_MODULE_18__["BlankComponent"]
+      }, {
+        path: 'oauth/google',
         component: _common_blank_blank_component__WEBPACK_IMPORTED_MODULE_18__["BlankComponent"]
       }]
     }, {
@@ -18985,6 +18999,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       production: false,
       apiUrl: 'https://api.hopestream.com',
       // apiUrl: 'http://localhost:3000',
+      clientUrl: 'http://localhost:8080',
       staticUrl: 'https://static.hopestream.com/',
       playerUrl: 'https://static.hopestream.com/player.html',
       stripeApiKey: 'pk_live_4c6L6Fy6sbVWH2UgF02yk0Pw00pTGSIXlg'
