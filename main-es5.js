@@ -14284,7 +14284,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         return new (t || RoutingModule)();
       },
       imports: [[_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes, {
-        useHash: true
+        useHash: false
       })], _angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]]
     });
 
@@ -14302,7 +14302,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         type: _angular_core__WEBPACK_IMPORTED_MODULE_0__["NgModule"],
         args: [{
           imports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"].forRoot(routes, {
-            useHash: true
+            useHash: false
           })],
           exports: [_angular_router__WEBPACK_IMPORTED_MODULE_1__["RouterModule"]]
         }]
