@@ -3539,28 +3539,27 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     /* harmony import */
 
 
-    var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(
-    /*! @services/app/app.api */
-    "./src/app/_services/app/app.api.ts");
-    /* harmony import */
-
-
-    var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
-    /*! @angular/common/http */
-    "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
-    /* harmony import */
-
-
-    var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    var _environments_environment__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(
     /*! @environments/environment */
     "./src/environments/environment.ts");
+    /* harmony import */
+
+
+    var _services_app_app_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
+    /*! @services/app/app.service */
+    "./src/app/_services/app/app.service.ts");
+    /* harmony import */
+
+
+    var _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    /*! @services/app/managers/organization.manager */
+    "./src/app/_services/app/managers/organization.manager.ts");
 
     var NETWORK = 'facebook';
     var FACEBOOK_AUTH_URL = 'https://www.facebook.com/v6.0/dialog/oauth';
     var FACEBOOK_API_URL = 'https://www.googleapis.com';
     var OAUTH_CLIENT_ID = '1613742305579846';
-    var OAUTH_CLIENT_SECRET = 'a9417a7250676b953d8b8b40467a90cd';
-    var REDIRECT_URI_LOCAL = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl, "/oauth/facebook");
+    var REDIRECT_URI = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_3__["environment"].clientUrl, "/oauth/facebook");
     var SCOPES = ['publish_video'];
 
     var PendingSubject = /*#__PURE__*/function (_rxjs__WEBPACK_IMPORT) {
@@ -3580,10 +3579,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }(rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]);
 
     var Facebook = /*#__PURE__*/function () {
-      function Facebook(http) {
+      function Facebook(app) {
         _classCallCheck(this, Facebook);
 
-        this.http = http;
+        this.app = app;
         this.loggedIn$ = new rxjs__WEBPACK_IMPORTED_MODULE_0__["BehaviorSubject"](false);
         this.pending = undefined;
       }
@@ -3593,26 +3592,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         value: function userLogin() {
           var _this16 = this;
 
-          return this.getAuthCodeLocal().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(function (code) {
-            return _this16.oauthToken({
-              'redirect_uri': REDIRECT_URI_LOCAL,
-              'code': code
-            });
-          }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (credentials) {
-            var account = new _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__["App"].SocialAccount();
-            account.network = NETWORK;
-            account.accessToken = credentials.accessToken;
-            account.refreshToken = credentials.refreshToken;
-            return account;
+          return this.getAuthCode().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(function (code) {
+            var organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__["OrganizationManager"].sharedInstance.organization;
+            return _this16.app.API.getOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, code);
+          })).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["tap"])(function (account) {
+            _this16.credentials = account;
+
+            _this16.loggedIn$.next(true);
           }));
         }
       }, {
-        key: "getAuthCodeLocal",
-        value: function getAuthCodeLocal() {
+        key: "getAuthCode",
+        value: function getAuthCode() {
           var result = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
           var params = new URLSearchParams();
           params.set('client_id', OAUTH_CLIENT_ID);
-          params.set('redirect_uri', REDIRECT_URI_LOCAL);
+          params.set('redirect_uri', REDIRECT_URI);
           params.set('scope', SCOPES.join(' '));
           params.set('response_type', 'code');
           params.set('state', '12345');
@@ -3650,36 +3645,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return result;
         }
       }, {
-        key: "oauthToken",
-        value: function oauthToken(params_) {
-          var headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          };
-          var params = new URLSearchParams();
-          params.set('client_id', OAUTH_CLIENT_ID);
-          params.set('client_secret', OAUTH_CLIENT_SECRET);
-
-          var _params = params_ || {};
-
-          for (var key in _params) {
-            params.set(key, _params[key]);
-          }
-
-          return this.http.request('POST', 'https://graph.facebook.com/v6.0/oauth/access_token', {
-            body: params.toString(),
-            headers: headers,
-            responseType: 'json',
-            observe: 'response'
-          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (response) {
-            var json = response.body;
-            return {
-              'accessToken': json.access_token,
-              'refreshToken': undefined
-            };
-          }));
-        }
-      }, {
         key: "userLogout",
         value: function userLogout() {
           this.credentials = undefined;
@@ -3689,11 +3654,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "restoreLoggedInUser",
         value: function restoreLoggedInUser(account) {
-          this.credentials = {
-            accessToken: account.accessToken,
-            refreshToken: account.refreshToken
-          };
-          this.loggedIn$.next(true);
+          this.credentials = account;
+          this.loggedIn$.next(!!account);
           return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function () {}));
         }
       }, {
@@ -3701,11 +3663,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         value: function userRefresh(token) {
           var _this17 = this;
 
-          return this.oauthToken({
-            'grant_type': 'refresh_token',
-            'refresh_token': token
-          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (credentials) {
-            _this17.credentials = credentials;
+          var organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__["OrganizationManager"].sharedInstance.organization;
+          return this.app.API.refreshOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, token).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (account) {
+            _this17.credentials = account;
 
             _this17.loggedIn$.next(true);
           }));
@@ -3760,7 +3720,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           var url = FACEBOOK_API_URL + path;
           var subject = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
-          this.http.request(method, url, {
+          this.app.auth.http.request(method, url, {
             body: data,
             headers: headers,
             params: params,
@@ -3921,7 +3881,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }();
 
     Facebook.ɵfac = function Facebook_Factory(t) {
-      return new (t || Facebook)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"]));
+      return new (t || Facebook)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_services_app_app_service__WEBPACK_IMPORTED_MODULE_4__["AppService"]));
     };
 
     Facebook.ɵprov = _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵdefineInjectable"]({
@@ -3935,7 +3895,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         type: _angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"]
       }], function () {
         return [{
-          type: _angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"]
+          type: _services_app_app_service__WEBPACK_IMPORTED_MODULE_4__["AppService"]
         }];
       }, null);
     })();
@@ -3989,28 +3949,27 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     /* harmony import */
 
 
-    var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(
-    /*! @services/app/app.api */
-    "./src/app/_services/app/app.api.ts");
-    /* harmony import */
-
-
-    var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
-    /*! @angular/common/http */
-    "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
-    /* harmony import */
-
-
-    var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    var _environments_environment__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(
     /*! @environments/environment */
     "./src/environments/environment.ts");
+    /* harmony import */
 
-    var NETWORK = 'youtube';
+
+    var _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(
+    /*! @services/app/managers/organization.manager */
+    "./src/app/_services/app/managers/organization.manager.ts");
+    /* harmony import */
+
+
+    var _services_app_app_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(
+    /*! @services/app/app.service */
+    "./src/app/_services/app/app.service.ts");
+
+    var NETWORK = 'google';
     var GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
     var GOOGLE_API_URL = 'https://www.googleapis.com';
     var OAUTH_CLIENT_ID = '411673316996-iak5hlp5od4pvefhlc9ephasmp9dgo6f.apps.googleusercontent.com';
-    var OAUTH_CLIENT_SECRET = '2BQeOxl-YIAo-HjLLz-hxorg';
-    var REDIRECT_URI_LOCAL = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl, "/oauth/google");
+    var REDIRECT_URI = "".concat(_environments_environment__WEBPACK_IMPORTED_MODULE_3__["environment"].clientUrl, "/oauth/google");
     var SCOPES = ['https://www.googleapis.com/auth/youtube.upload', 'https://www.googleapis.com/auth/youtube'];
 
     var PendingSubject = /*#__PURE__*/function (_rxjs__WEBPACK_IMPORT2) {
@@ -4030,10 +3989,10 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }(rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]);
 
     var Google = /*#__PURE__*/function () {
-      function Google(http) {
+      function Google(app) {
         _classCallCheck(this, Google);
 
-        this.http = http;
+        this.app = app;
         this.loggedIn$ = new rxjs__WEBPACK_IMPORTED_MODULE_0__["BehaviorSubject"](false);
         this.pending = undefined;
       }
@@ -4043,27 +4002,22 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         value: function userLogin() {
           var _this21 = this;
 
-          return this.getAuthCodeLocal().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(function (code) {
-            return _this21.oauthToken({
-              'grant_type': 'authorization_code',
-              'redirect_uri': REDIRECT_URI_LOCAL,
-              'code': code
-            });
-          }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (credentials) {
-            var account = new _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__["App"].SocialAccount();
-            account.network = NETWORK;
-            account.accessToken = credentials.accessToken;
-            account.refreshToken = credentials.refreshToken;
-            return account;
+          return this.getAuthCode().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(function (code) {
+            var organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__["OrganizationManager"].sharedInstance.organization;
+            return _this21.app.API.getOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, code);
+          })).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["tap"])(function (account) {
+            _this21.credentials = account;
+
+            _this21.loggedIn$.next(true);
           }));
         }
       }, {
-        key: "getAuthCodeLocal",
-        value: function getAuthCodeLocal() {
+        key: "getAuthCode",
+        value: function getAuthCode() {
           var result = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
           var params = new URLSearchParams();
           params.set('client_id', OAUTH_CLIENT_ID);
-          params.set('redirect_uri', REDIRECT_URI_LOCAL);
+          params.set('redirect_uri', REDIRECT_URI);
           params.set('scope', SCOPES.join(' '));
           params.set('response_type', 'code');
           params.set('prompt', 'select_account');
@@ -4099,36 +4053,6 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return result;
         }
       }, {
-        key: "oauthToken",
-        value: function oauthToken(params_) {
-          var headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded'
-          };
-          var params = new URLSearchParams();
-          params.set('client_id', OAUTH_CLIENT_ID);
-          params.set('client_secret', OAUTH_CLIENT_SECRET);
-
-          var _params = params_ || {};
-
-          for (var key in _params) {
-            params.set(key, _params[key]);
-          }
-
-          return this.http.request('POST', 'https://www.googleapis.com/oauth2/v4/token', {
-            body: params.toString(),
-            headers: headers,
-            responseType: 'json',
-            observe: 'response'
-          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (response) {
-            var json = response.body;
-            return {
-              'accessToken': json.access_token,
-              'refreshToken': json.refresh_token
-            };
-          }));
-        }
-      }, {
         key: "userLogout",
         value: function userLogout() {
           this.credentials = undefined;
@@ -4138,11 +4062,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
       }, {
         key: "restoreLoggedInUser",
         value: function restoreLoggedInUser(account) {
-          this.credentials = {
-            accessToken: account.accessToken,
-            refreshToken: account.refreshToken
-          };
-          this.loggedIn$.next(true);
+          this.credentials = account;
+          this.loggedIn$.next(!!account);
           return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function () {}));
         }
       }, {
@@ -4150,11 +4071,9 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         value: function userRefresh(token) {
           var _this22 = this;
 
-          return this.oauthToken({
-            'grant_type': 'refresh_token',
-            'refresh_token': token
-          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (credentials) {
-            _this22.credentials = credentials;
+          var organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__["OrganizationManager"].sharedInstance.organization;
+          return this.app.API.refreshOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, token).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(function (account) {
+            _this22.credentials = account;
 
             _this22.loggedIn$.next(true);
           }));
@@ -4209,7 +4128,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
           var url = GOOGLE_API_URL + path;
           var subject = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
-          this.http.request(method, url, {
+          this.app.auth.http.request(method, url, {
             body: data,
             headers: headers,
             params: params,
@@ -4370,7 +4289,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
     }();
 
     Google.ɵfac = function Google_Factory(t) {
-      return new (t || Google)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"]));
+      return new (t || Google)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_services_app_app_service__WEBPACK_IMPORTED_MODULE_5__["AppService"]));
     };
 
     Google.ɵprov = _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵdefineInjectable"]({
@@ -4384,7 +4303,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
         type: _angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"]
       }], function () {
         return [{
-          type: _angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"]
+          type: _services_app_app_service__WEBPACK_IMPORTED_MODULE_5__["AppService"]
         }];
       }, null);
     })();
@@ -4668,6 +4587,28 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           return this.auth.DELETE("/admin/api/1/organizations/".concat(organization.id, "/social"), {
             network: network
           }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(function () {}));
+        }
+      }, {
+        key: "getOrganizationAccessToken",
+        value: function getOrganizationAccessToken(organization, network, redirect, code) {
+          return this.auth.POST("/admin/api/1/organizations/".concat(organization.id, "/social/token"), {}, {}, {
+            network: network,
+            redirect: redirect,
+            code: code
+          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(function (response) {
+            return App.SocialAccount.fromJSON(response.body);
+          }));
+        }
+      }, {
+        key: "refreshOrganizationAccessToken",
+        value: function refreshOrganizationAccessToken(organization, network, redirect, token) {
+          return this.auth.POST("/admin/api/1/organizations/".concat(organization.id, "/social/refresh"), {}, {}, {
+            network: network,
+            redirect: redirect,
+            token: token
+          }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(function (response) {
+            return App.SocialAccount.fromJSON(response.body);
+          }));
         }
       }, {
         key: "updateOrganization",
@@ -16219,7 +16160,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           this.resetPasswordForm();
           this.app.API.getOrganizationSocialAccounts(this.organization).subscribe(function (accounts) {
             _this80.youtube = accounts.find(function (o) {
-              return o.network === 'youtube';
+              return o.network === 'google';
             });
             _this80.facebook = accounts.find(function (o) {
               return o.network === 'facebook';
@@ -16311,7 +16252,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var _this83 = this;
 
           this.loadingYoutube = true;
-          new _common_third_parties_google__WEBPACK_IMPORTED_MODULE_7__["Google"](this.app.auth.http).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
+          new _common_third_parties_google__WEBPACK_IMPORTED_MODULE_7__["Google"](this.app).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
             _this83.loadingYoutube = false;
           }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["mergeMap"])(function (account) {
             return _this83.app.API.setOrganizationSocialAccount(_this83.organization, account);
@@ -16335,7 +16276,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var _this84 = this;
 
           this.loadingYoutube = true;
-          this.app.API.deleteOrganizationSocialAccount(this.organization, 'youtube').pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
+          this.app.API.deleteOrganizationSocialAccount(this.organization, 'google').pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
             _this84.loadingYoutube = false;
           })).subscribe(function () {
             _this84.notifications.success('Success', 'Disconnected YouTube successfully.', {
@@ -16353,7 +16294,7 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
           var _this85 = this;
 
           this.loadingFacebook = true;
-          new _common_third_parties_facebook__WEBPACK_IMPORTED_MODULE_8__["Facebook"](this.app.auth.http).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
+          new _common_third_parties_facebook__WEBPACK_IMPORTED_MODULE_8__["Facebook"](this.app).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(function () {
             _this85.loadingFacebook = false;
           }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["mergeMap"])(function (account) {
             return _this85.app.API.setOrganizationSocialAccount(_this85.organization, account);
@@ -18997,8 +18938,8 @@ function _createClass(Constructor, protoProps, staticProps) { if (protoProps) _d
 
     var environment = {
       production: false,
-      apiUrl: 'https://api.hopestream.com',
-      // apiUrl: 'http://localhost:3000',
+      // apiUrl: 'https://api.hopestream.com',
+      apiUrl: 'http://localhost:3000',
       clientUrl: 'http://localhost:8080',
       staticUrl: 'https://static.hopestream.com/',
       playerUrl: 'https://static.hopestream.com/player.html',

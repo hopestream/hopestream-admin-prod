@@ -1845,9 +1845,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! rxjs */ "./node_modules/rxjs/_esm2015/index.js");
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @angular/core */ "./node_modules/@angular/core/__ivy_ngcc__/fesm2015/core.js");
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm2015/operators/index.js");
-/* harmony import */ var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @services/app/app.api */ "./src/app/_services/app/app.api.ts");
-/* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/common/http */ "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
-/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+/* harmony import */ var _services_app_app_service__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @services/app/app.service */ "./src/app/_services/app/app.service.ts");
+/* harmony import */ var _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @services/app/managers/organization.manager */ "./src/app/_services/app/managers/organization.manager.ts");
 
 
 
@@ -1862,8 +1862,7 @@ const NETWORK = 'facebook';
 const FACEBOOK_AUTH_URL = 'https://www.facebook.com/v6.0/dialog/oauth';
 const FACEBOOK_API_URL = 'https://www.googleapis.com';
 const OAUTH_CLIENT_ID = '1613742305579846';
-const OAUTH_CLIENT_SECRET = 'a9417a7250676b953d8b8b40467a90cd';
-const REDIRECT_URI_LOCAL = `${_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl}/oauth/facebook`;
+const REDIRECT_URI = `${_environments_environment__WEBPACK_IMPORTED_MODULE_3__["environment"].clientUrl}/oauth/facebook`;
 const SCOPES = [
     'publish_video'
 ];
@@ -1874,31 +1873,26 @@ class PendingSubject extends rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"] {
     }
 }
 class Facebook {
-    constructor(http) {
-        this.http = http;
+    constructor(app) {
+        this.app = app;
         this.loggedIn$ = new rxjs__WEBPACK_IMPORTED_MODULE_0__["BehaviorSubject"](false);
         this.pending = undefined;
     }
     get accessToken() { return this.credentials && this.credentials.accessToken; }
     userLogin() {
-        return this.getAuthCodeLocal().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(code => {
-            return this.oauthToken({
-                'redirect_uri': REDIRECT_URI_LOCAL,
-                'code': code,
-            });
-        }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(credentials => {
-            let account = new _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__["App"].SocialAccount();
-            account.network = NETWORK;
-            account.accessToken = credentials.accessToken;
-            account.refreshToken = credentials.refreshToken;
-            return account;
+        return this.getAuthCode().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(code => {
+            let organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__["OrganizationManager"].sharedInstance.organization;
+            return this.app.API.getOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, code);
+        })).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["tap"])(account => {
+            this.credentials = account;
+            this.loggedIn$.next(true);
         }));
     }
-    getAuthCodeLocal() {
+    getAuthCode() {
         let result = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
         let params = new URLSearchParams();
         params.set('client_id', OAUTH_CLIENT_ID);
-        params.set('redirect_uri', REDIRECT_URI_LOCAL);
+        params.set('redirect_uri', REDIRECT_URI);
         params.set('scope', SCOPES.join(' '));
         params.set('response_type', 'code');
         params.set('state', '12345');
@@ -1934,44 +1928,20 @@ class Facebook {
         }, 500);
         return result;
     }
-    oauthToken(params_) {
-        let headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-        };
-        let params = new URLSearchParams();
-        params.set('client_id', OAUTH_CLIENT_ID);
-        params.set('client_secret', OAUTH_CLIENT_SECRET);
-        let _params = params_ || {};
-        for (let key in _params) {
-            params.set(key, _params[key]);
-        }
-        return this.http.request('POST', 'https://graph.facebook.com/v6.0/oauth/access_token', {
-            body: params.toString(),
-            headers: headers,
-            responseType: 'json',
-            observe: 'response',
-        }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(response => {
-            const json = response.body;
-            return { 'accessToken': json.access_token, 'refreshToken': undefined };
-        }));
-    }
     userLogout() {
         this.credentials = undefined;
         this.loggedIn$.next(false);
         return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(() => { }));
     }
     restoreLoggedInUser(account) {
-        this.credentials = { accessToken: account.accessToken, refreshToken: account.refreshToken };
-        this.loggedIn$.next(true);
+        this.credentials = account;
+        this.loggedIn$.next(!!account);
         return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(() => { }));
     }
     userRefresh(token) {
-        return this.oauthToken({
-            'grant_type': 'refresh_token',
-            'refresh_token': token
-        }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(credentials => {
-            this.credentials = credentials;
+        let organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_5__["OrganizationManager"].sharedInstance.organization;
+        return this.app.API.refreshOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, token).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(account => {
+            this.credentials = account;
             this.loggedIn$.next(true);
         }));
     }
@@ -2012,7 +1982,7 @@ class Facebook {
         }
         let url = FACEBOOK_API_URL + path;
         let subject = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
-        this.http.request(method, url, {
+        this.app.auth.http.request(method, url, {
             body: data,
             headers: headers,
             params: params,
@@ -2104,11 +2074,11 @@ class Facebook {
         }
     }
 }
-Facebook.ɵfac = function Facebook_Factory(t) { return new (t || Facebook)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"])); };
+Facebook.ɵfac = function Facebook_Factory(t) { return new (t || Facebook)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_services_app_app_service__WEBPACK_IMPORTED_MODULE_4__["AppService"])); };
 Facebook.ɵprov = _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵdefineInjectable"]({ token: Facebook, factory: Facebook.ɵfac });
 /*@__PURE__*/ (function () { _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵsetClassMetadata"](Facebook, [{
         type: _angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"]
-    }], function () { return [{ type: _angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"] }]; }, null); })();
+    }], function () { return [{ type: _services_app_app_service__WEBPACK_IMPORTED_MODULE_4__["AppService"] }]; }, null); })();
 
 
 /***/ }),
@@ -2127,9 +2097,9 @@ __webpack_require__.r(__webpack_exports__);
 /* harmony import */ var rxjs__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(/*! rxjs */ "./node_modules/rxjs/_esm2015/index.js");
 /* harmony import */ var _angular_core__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(/*! @angular/core */ "./node_modules/@angular/core/__ivy_ngcc__/fesm2015/core.js");
 /* harmony import */ var rxjs_operators__WEBPACK_IMPORTED_MODULE_2__ = __webpack_require__(/*! rxjs/operators */ "./node_modules/rxjs/_esm2015/operators/index.js");
-/* harmony import */ var _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @services/app/app.api */ "./src/app/_services/app/app.api.ts");
-/* harmony import */ var _angular_common_http__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @angular/common/http */ "./node_modules/@angular/common/__ivy_ngcc__/fesm2015/http.js");
-/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+/* harmony import */ var _environments_environment__WEBPACK_IMPORTED_MODULE_3__ = __webpack_require__(/*! @environments/environment */ "./src/environments/environment.ts");
+/* harmony import */ var _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__ = __webpack_require__(/*! @services/app/managers/organization.manager */ "./src/app/_services/app/managers/organization.manager.ts");
+/* harmony import */ var _services_app_app_service__WEBPACK_IMPORTED_MODULE_5__ = __webpack_require__(/*! @services/app/app.service */ "./src/app/_services/app/app.service.ts");
 
 
 
@@ -2140,12 +2110,11 @@ __webpack_require__.r(__webpack_exports__);
 
 
 
-const NETWORK = 'youtube';
+const NETWORK = 'google';
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth';
 const GOOGLE_API_URL = 'https://www.googleapis.com';
 const OAUTH_CLIENT_ID = '411673316996-iak5hlp5od4pvefhlc9ephasmp9dgo6f.apps.googleusercontent.com';
-const OAUTH_CLIENT_SECRET = '2BQeOxl-YIAo-HjLLz-hxorg';
-const REDIRECT_URI_LOCAL = `${_environments_environment__WEBPACK_IMPORTED_MODULE_5__["environment"].clientUrl}/oauth/google`;
+const REDIRECT_URI = `${_environments_environment__WEBPACK_IMPORTED_MODULE_3__["environment"].clientUrl}/oauth/google`;
 const SCOPES = [
     'https://www.googleapis.com/auth/youtube.upload',
     'https://www.googleapis.com/auth/youtube'
@@ -2157,32 +2126,26 @@ class PendingSubject extends rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"] {
     }
 }
 class Google {
-    constructor(http) {
-        this.http = http;
+    constructor(app) {
+        this.app = app;
         this.loggedIn$ = new rxjs__WEBPACK_IMPORTED_MODULE_0__["BehaviorSubject"](false);
         this.pending = undefined;
     }
     get accessToken() { return this.credentials && this.credentials.accessToken; }
     userLogin() {
-        return this.getAuthCodeLocal().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(code => {
-            return this.oauthToken({
-                'grant_type': 'authorization_code',
-                'redirect_uri': REDIRECT_URI_LOCAL,
-                'code': code,
-            });
-        }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(credentials => {
-            let account = new _services_app_app_api__WEBPACK_IMPORTED_MODULE_3__["App"].SocialAccount();
-            account.network = NETWORK;
-            account.accessToken = credentials.accessToken;
-            account.refreshToken = credentials.refreshToken;
-            return account;
+        return this.getAuthCode().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["mergeMap"])(code => {
+            let organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__["OrganizationManager"].sharedInstance.organization;
+            return this.app.API.getOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, code);
+        })).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["tap"])(account => {
+            this.credentials = account;
+            this.loggedIn$.next(true);
         }));
     }
-    getAuthCodeLocal() {
+    getAuthCode() {
         let result = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
         let params = new URLSearchParams();
         params.set('client_id', OAUTH_CLIENT_ID);
-        params.set('redirect_uri', REDIRECT_URI_LOCAL);
+        params.set('redirect_uri', REDIRECT_URI);
         params.set('scope', SCOPES.join(' '));
         params.set('response_type', 'code');
         params.set('prompt', 'select_account');
@@ -2216,44 +2179,20 @@ class Google {
         }, 500);
         return result;
     }
-    oauthToken(params_) {
-        let headers = {
-            'Accept': 'application/json',
-            'Content-Type': 'application/x-www-form-urlencoded',
-        };
-        let params = new URLSearchParams();
-        params.set('client_id', OAUTH_CLIENT_ID);
-        params.set('client_secret', OAUTH_CLIENT_SECRET);
-        let _params = params_ || {};
-        for (let key in _params) {
-            params.set(key, _params[key]);
-        }
-        return this.http.request('POST', 'https://www.googleapis.com/oauth2/v4/token', {
-            body: params.toString(),
-            headers: headers,
-            responseType: 'json',
-            observe: 'response',
-        }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(response => {
-            const json = response.body;
-            return { 'accessToken': json.access_token, 'refreshToken': json.refresh_token };
-        }));
-    }
     userLogout() {
         this.credentials = undefined;
         this.loggedIn$.next(false);
         return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(() => { }));
     }
     restoreLoggedInUser(account) {
-        this.credentials = { accessToken: account.accessToken, refreshToken: account.refreshToken };
-        this.loggedIn$.next(true);
+        this.credentials = account;
+        this.loggedIn$.next(!!account);
         return Object(rxjs__WEBPACK_IMPORTED_MODULE_0__["of"])(true).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(() => { }));
     }
     userRefresh(token) {
-        return this.oauthToken({
-            'grant_type': 'refresh_token',
-            'refresh_token': token
-        }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(credentials => {
-            this.credentials = credentials;
+        let organization = _services_app_managers_organization_manager__WEBPACK_IMPORTED_MODULE_4__["OrganizationManager"].sharedInstance.organization;
+        return this.app.API.refreshOrganizationAccessToken(organization, NETWORK, REDIRECT_URI, token).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_2__["map"])(account => {
+            this.credentials = account;
             this.loggedIn$.next(true);
         }));
     }
@@ -2294,7 +2233,7 @@ class Google {
         }
         let url = GOOGLE_API_URL + path;
         let subject = new rxjs__WEBPACK_IMPORTED_MODULE_0__["Subject"]();
-        this.http.request(method, url, {
+        this.app.auth.http.request(method, url, {
             body: data,
             headers: headers,
             params: params,
@@ -2386,11 +2325,11 @@ class Google {
         }
     }
 }
-Google.ɵfac = function Google_Factory(t) { return new (t || Google)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"])); };
+Google.ɵfac = function Google_Factory(t) { return new (t || Google)(_angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵinject"](_services_app_app_service__WEBPACK_IMPORTED_MODULE_5__["AppService"])); };
 Google.ɵprov = _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵɵdefineInjectable"]({ token: Google, factory: Google.ɵfac });
 /*@__PURE__*/ (function () { _angular_core__WEBPACK_IMPORTED_MODULE_1__["ɵsetClassMetadata"](Google, [{
         type: _angular_core__WEBPACK_IMPORTED_MODULE_1__["Injectable"]
-    }], function () { return [{ type: _angular_common_http__WEBPACK_IMPORTED_MODULE_4__["HttpClient"] }]; }, null); })();
+    }], function () { return [{ type: _services_app_app_service__WEBPACK_IMPORTED_MODULE_5__["AppService"] }]; }, null); })();
 
 
 /***/ }),
@@ -2539,6 +2478,16 @@ class AppAPI {
     }
     deleteOrganizationSocialAccount(organization, network) {
         return this.auth.DELETE(`/admin/api/1/organizations/${organization.id}/social`, { network: network }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(() => { }));
+    }
+    getOrganizationAccessToken(organization, network, redirect, code) {
+        return this.auth.POST(`/admin/api/1/organizations/${organization.id}/social/token`, {}, {}, { network, redirect, code }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(response => {
+            return App.SocialAccount.fromJSON(response.body);
+        }));
+    }
+    refreshOrganizationAccessToken(organization, network, redirect, token) {
+        return this.auth.POST(`/admin/api/1/organizations/${organization.id}/social/refresh`, {}, {}, { network, redirect, token }).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["map"])(response => {
+            return App.SocialAccount.fromJSON(response.body);
+        }));
     }
     updateOrganization(organization) {
         return this.auth.PUT(`/admin/api/1/organizations/${organization.id}`, {}, {}, organization).pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_1__["mergeMap"])(response => {
@@ -8383,7 +8332,7 @@ class SettingsComponent {
         this.userForm.addControl('name', new _angular_forms__WEBPACK_IMPORTED_MODULE_1__["FormControl"](this.user.name, [_angular_forms__WEBPACK_IMPORTED_MODULE_1__["Validators"].required]));
         this.resetPasswordForm();
         this.app.API.getOrganizationSocialAccounts(this.organization).subscribe(accounts => {
-            this.youtube = accounts.find(o => o.network === 'youtube');
+            this.youtube = accounts.find(o => o.network === 'google');
             this.facebook = accounts.find(o => o.network === 'facebook');
         });
         this.cardForm = new _angular_forms__WEBPACK_IMPORTED_MODULE_1__["FormGroup"]({});
@@ -8439,7 +8388,7 @@ class SettingsComponent {
     }
     onConnectYoutube() {
         this.loadingYoutube = true;
-        new _common_third_parties_google__WEBPACK_IMPORTED_MODULE_7__["Google"](this.app.auth.http).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
+        new _common_third_parties_google__WEBPACK_IMPORTED_MODULE_7__["Google"](this.app).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
             this.loadingYoutube = false;
         }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["mergeMap"])(account => {
             return this.app.API.setOrganizationSocialAccount(this.organization, account);
@@ -8455,7 +8404,7 @@ class SettingsComponent {
     }
     onDisconnectYoutube() {
         this.loadingYoutube = true;
-        this.app.API.deleteOrganizationSocialAccount(this.organization, 'youtube').pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
+        this.app.API.deleteOrganizationSocialAccount(this.organization, 'google').pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
             this.loadingYoutube = false;
         })).subscribe(() => {
             this.notifications.success('Success', 'Disconnected YouTube successfully.', { timeOut: 5000 });
@@ -8466,7 +8415,7 @@ class SettingsComponent {
     }
     onConnectFacebook() {
         this.loadingFacebook = true;
-        new _common_third_parties_facebook__WEBPACK_IMPORTED_MODULE_8__["Facebook"](this.app.auth.http).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
+        new _common_third_parties_facebook__WEBPACK_IMPORTED_MODULE_8__["Facebook"](this.app).userLogin().pipe(Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["finalize"])(() => {
             this.loadingFacebook = false;
         }), Object(rxjs_operators__WEBPACK_IMPORTED_MODULE_4__["mergeMap"])(account => {
             return this.app.API.setOrganizationSocialAccount(this.organization, account);
@@ -9764,8 +9713,8 @@ __webpack_require__.r(__webpack_exports__);
 // The list of file replacements can be found in `angular.json`.
 const environment = {
     production: false,
-    apiUrl: 'https://api.hopestream.com',
-    // apiUrl: 'http://localhost:3000',
+    // apiUrl: 'https://api.hopestream.com',
+    apiUrl: 'http://localhost:3000',
     clientUrl: 'http://localhost:8080',
     staticUrl: 'https://static.hopestream.com/',
     playerUrl: 'https://static.hopestream.com/player.html',
